@@ -5,10 +5,18 @@
              x:Class="Reversi.MainPage">
 
     <StackLayout>
-        <!-- Place new controls here -->
-        <Label Text="Welcome to Xamarin.Forms!" 
-           HorizontalOptions="Center"
-           VerticalOptions="CenterAndExpand" />
+        <StackLayout.BackgroundColor>
+            Black
+        </StackLayout.BackgroundColor>
+        <Label Text="HAHAAGA" FontSize="72" TextColor="White" HorizontalOptions="CenterAndExpand" />
+        <Label Text="的" FontSize="60" TextColor="White" HorizontalOptions="CenterAndExpand" />
+        <Label Text="黑白棋" FontSize="96" TextColor="White" HorizontalOptions="CenterAndExpand" />
+        <!--PlaceHolder-->
+        <StackLayout HeightRequest="100"/>
+        <!--PlaceHolder-->
+        <Button Text="Player vs Player (Local)" Clicked="BTN_LocalPlay_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="10,10,10,10"/>
+        <Button Text="Player vs AI"             Clicked="BTN_AiPlay_Clicked"    TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="10,10,10,10"/>
+        <Button Text="Player vs Player (LAN)"   Clicked="BTN_LANPlay_Clicked"   TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="10,10,10,10"/>
     </StackLayout>
 
 </ContentPage>

@@ -13,5 +13,21 @@ namespace Reversi
         {
             InitializeComponent();
         }
+
+        protected void BTN_LocalPlay_Clicked(object sender, EventArgs args)
+        {
+            Navigation.PushModalAsync(new LocalPlayPage());
+        }
+
+        protected void BTN_AiPlay_Clicked(object sender, EventArgs args)
+        {
+            Navigation.PushModalAsync(new AIPlayPage());
+        }
+
+        protected void BTN_LANPlay_Clicked(object sender, EventArgs args)
+        {
+            Navigation.PushModalAsync(new NetworkPairingPage());
+        }
+
     }
 }

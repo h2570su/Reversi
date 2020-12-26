@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Reversi.LocalPlayPage">
+    <ContentPage.Content>
+        <StackLayout>
+            <StackLayout.BackgroundColor>
+                Black
+            </StackLayout.BackgroundColor>
+            <Label Text="兩個人玩" TextColor="White" FontSize="72" HorizontalOptions="CenterAndExpand"/>
+            <StackLayout HeightRequest="50"/>
+            <StackLayout HeightRequest="400" BackgroundColor="White">
+                <Grid x:Name="mainGameGrid" Margin="5,5,5,5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowSpacing>
+                        5
+                    </Grid.RowSpacing>
+                    <Grid.ColumnSpacing>
+                        5
+                    </Grid.ColumnSpacing>
+                </Grid>
+            </StackLayout>
+            <StackLayout HeightRequest="10"/>
+            <Label Text="白子下" TextColor="White" FontSize="60" HorizontalOptions="CenterAndExpand"/>
+            <Button Text="Test" Clicked="Button_Clicked" HorizontalOptions="FillAndExpand"/>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
