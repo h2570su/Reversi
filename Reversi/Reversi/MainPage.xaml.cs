@@ -10,8 +10,9 @@ namespace Reversi
     public partial class MainPage : ContentPage
     {
         public MainPage()
-        {
+        {            
             InitializeComponent();
+            
         }
 
         protected void BTN_LocalPlay_Clicked(object sender, EventArgs args)

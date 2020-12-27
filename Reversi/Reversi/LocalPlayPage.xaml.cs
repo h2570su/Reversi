@@ -51,67 +51,9 @@ namespace Reversi
                     btn.Clicked += reversiBTNClicked;
                 }
             }
+            initGame();
+        }      
 
-            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
-            {
-                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
-                {
-                    gameGrid[i, j] = -1;
-                }
-            }
-
-            gameGrid[3, 3] = 1;
-            gameGrid[3, 4] = 0;
-            gameGrid[4, 3] = 0;
-            gameGrid[4, 4] = 1;
-            gameStack.Push(new KeyValuePair<int[,], Turn>(gameGrid.Clone() as int[,], Turn.Black));
-            whoTurn = Turn.Black;
-            updateGameViewBTNs();
-            updateGameViewBTNcanMove(getCanPut(whoTurn));
-
-        }
-
-        protected void reversiBTNClicked(object sender, EventArgs args)
-        {
-            var btn = sender as ReversiButton;
-            if (btn != null)
-            {
-                if (btn.BackgroundColor == Color.Blue)
-                {
-                    int row = btn.gameRow;
-                    int col = btn.gameCol;
-                    Turn nowTurn = whoTurn;
-                    var next = getNextGrid(row, col, nowTurn);
-                    if (next != null)
-                    {
-                        gameGrid = next;
-                        whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
-                        updateGameViewBTNs();
-                        var nextCanMove = getCanPut(whoTurn);
-                        if (nextCanMove.Count > 0)
-                        {
-                            updateGameViewBTNcanMove(nextCanMove);
-                            updateGameInfo();
-                        }
-                        else
-                        {
-                            whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
-                            nextCanMove = getCanPut(whoTurn);
-                            if (nextCanMove.Count > 0)
-                            {
-                                updateGameViewBTNcanMove(nextCanMove);
-                                updateGameInfo();
-                            }
-                            else
-                            {
-                                finishGame();
-                            }
-                        }
-                    }
-                    
-                }
-            }
-        }
 
         private void updateGameViewBTNs()
         {
@@ -160,6 +102,48 @@ namespace Reversi
         private void updateGameInfo()
         {
             gameStack.Push(new KeyValuePair<int[,], Turn>(gameGrid.Clone() as int[,], whoTurn));
+            LabelGameTurn.Text = (whoTurn == Turn.Black)?"黑子下":"白子下";
+            int blackCount = 0;
+            int whiteCount = 0;
+            for(int i=0;i<=gameGrid.GetUpperBound(0);i++)
+            {
+                for(int j=0;j<=gameGrid.GetUpperBound(1);j++)
+                {
+                    if(gameGrid[i,j]==0)
+                    {
+                        blackCount++;
+                    }
+                    else if (gameGrid[i, j] == 1)
+                    {
+                        whiteCount++;
+                    }
+                }
+            }
+            LabelBlackScore.Text = string.Format("○: {0,2:##}", blackCount);
+            LabelWhiteScore.Text = string.Format("●: {0,2:##}", whiteCount);
+        }
+
+
+
+        private void initGame()
+        {
+            gameStack.Clear();
+            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
+            {
+                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
+                {
+                    gameGrid[i, j] = -1;
+                }
+            }
+
+            gameGrid[3, 3] = 0;
+            gameGrid[3, 4] = 1;
+            gameGrid[4, 3] = 1;
+            gameGrid[4, 4] = 0;
+            whoTurn = Turn.Black;
+            updateGameInfo();
+            updateGameViewBTNs();
+            updateGameViewBTNcanMove(getCanPut(whoTurn));
         }
 
         private void undoGame()
@@ -168,19 +152,70 @@ namespace Reversi
             {
                 gameStack.Pop();
                 var top = gameStack.Pop();
-                gameStack.Push(top);
+                //gameStack.Push(top);
 
                 gameGrid = top.Key;
                 whoTurn = top.Value;
                 updateGameViewBTNs();
                 updateGameViewBTNcanMove(getCanPut(whoTurn));
+                updateGameInfo();
             }
         }
 
-        private void finishGame()
+        private async void finishGame()
         {
-            Navigation.PopModalAsync();
+            updateGameViewBTNs();
+            updateGameInfo();
+            int blackCount = 0;
+            int whiteCount = 0;
+            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
+            {
+                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
+                {
+                    if (gameGrid[i, j] == 0)
+                    {
+                        blackCount++;
+                    }
+                    else if (gameGrid[i, j] == 1)
+                    {
+                        whiteCount++;
+                    }
+                }
+            }
+            string winner;
+            if(blackCount>whiteCount)
+            {
+                winner = "黑的";
+            }
+            else if(whiteCount>blackCount)
+            {
+                winner = "白的";
+            }
+            else
+            {
+                winner = "平手";
+            }
+            await DisplayAlert("誰贏了?", winner, "好喔");
+            bool anotherGameSel = await DisplayAlert("再來一局?", "你要再來一局嗎?", "好", "不要");
+            if (anotherGameSel)
+            {
+                initGame();
+            }
+            else
+            {
+                bool quitSel = await DisplayAlert("不然呢?", "你想要怎樣", "退出", "待著");
+                if (quitSel)
+                {
+                    Navigation.PopModalAsync();
+                }
+                else
+                {
+                    
+                }
+            }
         }
+
+
         List<KeyValuePair<int, int>> getCanPut(Turn nowMoving)
         {
 
@@ -599,9 +634,57 @@ namespace Reversi
             return result;
         }
 
-        private void Button_Clicked(object sender, EventArgs e)
+
+        protected void BTNUndo_Clicked(object sender, EventArgs e)
         {
             undoGame();
+        }
+
+        protected void reversiBTNClicked(object sender, EventArgs args)
+        {
+            var btn = sender as ReversiButton;
+            if (btn != null)
+            {
+                if (btn.BackgroundColor == Color.Blue)
+                {
+                    int row = btn.gameRow;
+                    int col = btn.gameCol;
+                    Turn nowTurn = whoTurn;
+                    var next = getNextGrid(row, col, nowTurn);
+                    if (next != null)
+                    {
+                        gameGrid = next;
+                        whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
+                        updateGameViewBTNs();
+                        var nextCanMove = getCanPut(whoTurn);
+                        if (nextCanMove.Count > 0)
+                        {
+                            updateGameViewBTNcanMove(nextCanMove);
+                            updateGameInfo();
+                        }
+                        else
+                        {
+                            whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
+                            nextCanMove = getCanPut(whoTurn);
+                            if (nextCanMove.Count > 0)
+                            {
+                                updateGameViewBTNcanMove(nextCanMove);
+                                updateGameInfo();
+                            }
+                            else
+                            {
+                                finishGame();
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+        private void Button_Clicked(object sender, EventArgs e)
+        {
+
         }
     }
 }

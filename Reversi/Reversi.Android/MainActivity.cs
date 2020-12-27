@@ -20,6 +20,7 @@ namespace Reversi.Droid
             base.OnCreate(savedInstanceState);
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
             LoadApplication(new App());
+            Window.SetStatusBarColor(new Android.Graphics.Color(0, 0, 0));
         }
     }
 }

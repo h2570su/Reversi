@@ -12,6 +12,7 @@ namespace Reversi
             InitializeComponent();
 
             MainPage = new NavigationPage(new MainPage());
+            (MainPage as NavigationPage).BarBackgroundColor = Color.Black;
         }
 
         protected override void OnStart()
