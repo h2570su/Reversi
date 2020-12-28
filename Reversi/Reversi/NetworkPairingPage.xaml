@@ -7,24 +7,21 @@
             <StackLayout.BackgroundColor>
                 Black
             </StackLayout.BackgroundColor>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="4*"/>
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0">
-                    <StackLayout>
+            <StackLayout>
+                <StackLayout>
                     <Label Text="配對" x:Name="LabelTitle"  FontSize="72" TextColor="White" HorizontalOptions="CenterAndExpand" />
                     <Label Text="暱稱:" FontSize="36" TextColor="White" HorizontalOptions="StartAndExpand" />
                     <StackLayout BackgroundColor="White" Padding="5,5,5,5">
                         <Entry Text="" x:Name="EntryPlayerName" TextColor="White" PlaceholderColor="White" BackgroundColor="Black"/>
                     </StackLayout>
-                        </StackLayout>
-                </Grid>
-                <Grid x:Name="listContainer" Grid.Row="1">
-                  
-                </Grid>
-            </Grid>
+                </StackLayout>
+                <Label Text="其他人:" FontSize="36" TextColor="White" HorizontalOptions="StartAndExpand" />
+                <StackLayout Margin="10,10,10,10" VerticalOptions="FillAndExpand">
+                    <ScrollView>
+                        <StackLayout x:Name="EPButtons"/>
+                    </ScrollView>
+                </StackLayout>
+            </StackLayout>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

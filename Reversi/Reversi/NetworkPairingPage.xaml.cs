@@ -15,23 +15,21 @@ namespace Reversi
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class NetworkPairingPage : ContentPage
     {
-        public class EPButton : ViewCell
+        public class EPButton : Button
         {
             public long Timeout = 0;
             public ulong PeerID = 0;
-            public Button button;
+
+            public IPAddress PeerIP;
 
             public EPButton() : base()
             {
-                button = new Button();
-                button.TextColor = Color.White;
-                button.BorderWidth = 5;
-                button.BackgroundColor = Color.Transparent;
-                button.HorizontalOptions = LayoutOptions.Fill;
-                button.Margin = new Thickness(10, 10, 10, 10);
-                var stackLayout = new StackLayout();
-                stackLayout.Children.Add(button);
-                View = stackLayout;
+                TextColor = Color.White;
+                BorderWidth = 5;
+                BorderColor = Color.White;
+                BackgroundColor = Color.DarkSlateGray;
+                HorizontalOptions = LayoutOptions.FillAndExpand;
+                Margin = new Thickness(10, 10, 10, 10);
             }
         }
 
@@ -47,9 +45,8 @@ namespace Reversi
         UdpClient udpClient;
         System.Threading.Thread udpReceiveThread;
 
-        ListView listView;
-
-        ObservableCollection<EPButton> buttons = new ObservableCollection<EPButton>();
+        TcpListener tcpListener;
+        System.Threading.Thread tcpReceiveThread;
 
         public NetworkPairingPage()
         {
@@ -69,13 +66,10 @@ namespace Reversi
             udpReceiveThread.IsBackground = true;
             udpReceiveThread.Start();
 
-            listView = new ListView();
-            listView.ItemTemplate = new DataTemplate(typeof(EPButton));
-            listView.ItemsSource = buttons;
-            listView.BackgroundColor = Color.Transparent;
-
-            listContainer.Children.Add(listView);
-
+            tcpListener = new TcpListener(IPAddress.Any, 37654);
+            tcpReceiveThread = new System.Threading.Thread(receiveingTCPPacket);
+            tcpReceiveThread.IsBackground = true;
+            tcpReceiveThread.Start();
         }
 
         private void clearBackground(object sender, EventArgs args)
@@ -85,6 +79,7 @@ namespace Reversi
                 cancelingBackground = true;
                 backgroundWorker.Wait();
             }
+            
             try
             {
                 udpReceiveThread.Abort();
@@ -93,6 +88,15 @@ namespace Reversi
             {
 
             }
+            try
+            {
+                tcpReceiveThread.Abort();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            tcpListener.Stop();
         }
 
 
@@ -113,6 +117,20 @@ namespace Reversi
                 Dispatcher.BeginInvokeOnMainThread(() =>
                 {
                     LabelTitle.Text = newTitle;
+                    List<EPButton> toRemove = new List<EPButton>();
+                    foreach (var v in EPButtons.Children)
+                    {
+                        EPButton b = v as EPButton;
+                        if (b.Timeout < ((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds())
+                        {
+                            toRemove.Add(b);
+                        }
+                    }
+                    foreach (var v in toRemove)
+                    {
+                        v.Clicked -= BTNPeer_Clicked;
+                        EPButtons.Children.Remove(v);
+                    }
                 });
 
                 string telegram = string.Format("ID: {0}, Name: {1}", id.ToString(), (EntryPlayerName.Text != "") ? EntryPlayerName.Text : defaultName);
@@ -133,32 +151,100 @@ namespace Reversi
                     {
                         string IDstr = receiveStr.Split(',')[0].Substring(4);
                         string Namestr = receiveStr.Split(',')[1].Substring(7);
-                        if (IDstr == id.ToString())
+                        if (IDstr != id.ToString())
                         {
                             Dispatcher.BeginInvokeOnMainThread(() =>
                             {
                                 EPButton btn = null;
-                                foreach (var v in buttons)
+                                foreach (var v in EPButtons.Children)
                                 {
-                                    if (v.PeerID == ulong.Parse(IDstr))
+                                    EPButton b = v as EPButton;
+                                    if (b.PeerID == ulong.Parse(IDstr))
                                     {
-                                        btn = v;
+                                        btn = b;
                                     }
                                 }
                                 if (btn == null)
                                 {
                                     btn = new EPButton();
                                     btn.PeerID = ulong.Parse(IDstr);
-                                    buttons.Add(btn);
+                                    EPButtons.Children.Add(btn);
+                                    btn.Clicked += BTNPeer_Clicked;
                                 }
-                                btn.button.Text = Namestr;
-                                btn.Timeout = ((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds();
-
-
+                                btn.Text = Namestr;
+                                btn.PeerIP = result.RemoteEndPoint.Address;
+                                btn.Timeout = ((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() + 10;
                             });
                         }
                     }
                 }
+            }
+        }
+
+        private void receiveingTCPPacket()
+        {
+            tcpListener.Start();
+            while (true)
+            {
+                var client = tcpListener.AcceptTcpClient();
+                byte[] buffer = new byte[2048];
+                int byteReceived = client.GetStream().Read(buffer, 0, buffer.Length);
+
+                string receiveStr = Encoding.UTF8.GetString(buffer);
+                receiveStr = receiveStr.Trim('\0');
+                if (receiveStr.Contains("ID: ") && receiveStr.Contains(", Name: ") && receiveStr.Contains(", To: "))
+                {
+                    string IDstr = receiveStr.Split(',')[0].Substring(4);
+                    string Namestr = receiveStr.Split(',')[1].Substring(7);
+                    string Tostr = receiveStr.Split(',')[2].Substring(5);
+                    if (Tostr == id.ToString())
+                    {
+                        string OKstr = "OK..";
+                        client.GetStream().Write(Encoding.UTF8.GetBytes(OKstr), 0, Encoding.UTF8.GetByteCount(OKstr));
+                        Dispatcher.BeginInvokeOnMainThread(() =>
+                        {
+                            Navigation.PopModalAsync();
+                            Navigation.PushModalAsync(new NetworkPlayPage(client));
+                        });
+                    }
+
+                }
+            }
+        }
+        protected void BTNPeer_Clicked(object sender, EventArgs args)
+        {
+            TcpClient tcpClient = new TcpClient();
+            EPButton btn = sender as EPButton;
+            try
+            {
+                tcpClient.Connect(btn.PeerIP, 37654);
+                int trying = 0;
+                do
+                {
+                    string telegram = string.Format("ID: {0}, Name: {1}, To: {2}", id.ToString(), (EntryPlayerName.Text != "") ? EntryPlayerName.Text : defaultName, btn.PeerID.ToString());
+                    tcpClient.GetStream().Write(Encoding.UTF8.GetBytes(telegram), 0, Encoding.UTF8.GetByteCount(telegram));
+
+                    byte[] buffer = new byte[2048];
+                    tcpClient.GetStream().Read(buffer, 0, buffer.Length);
+                    string response = Encoding.UTF8.GetString(buffer);
+                    response = response.Trim('\0');
+                    if (response.Contains("OK.."))
+                    {
+                        Dispatcher.BeginInvokeOnMainThread(() =>
+                        {
+                            Navigation.PopModalAsync();
+                            Navigation.PushModalAsync(new NetworkPlayPage(tcpClient));
+                        });
+                    }
+                    else
+                    {
+                        trying++;
+                    }
+                } while (trying < 5);
+            }
+            catch
+            {
+                EPButtons.Children.Remove(btn);
             }
         }
     }
