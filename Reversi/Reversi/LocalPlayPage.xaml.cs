@@ -21,16 +21,12 @@ namespace Reversi
             gameCol = col;
         }
     }
-    enum Turn
-    {
-        Black, White
-    }
+    
     public partial class LocalPlayPage : ContentPage
     {
         ReversiButton[,] BTNGrid = new ReversiButton[8, 8];
-        int[,] gameGrid = new int[8, 8];
-        Stack<KeyValuePair<int[,], Turn>> gameStack = new Stack<KeyValuePair<int[,], Turn>>();
-        Turn whoTurn = Turn.Black;
+        ReversiLogic reversi = new ReversiLogic();
+
         public LocalPlayPage()
         {
             InitializeComponent();
@@ -51,19 +47,21 @@ namespace Reversi
                     btn.Clicked += reversiBTNClicked;
                 }
             }
-            initGame();
-        }      
+            reversi.BroadChanged += onGameBroadChanged;
+            reversi.GameFinished += onGameFinished;
+            reversi.InitGame();
+            
+        }
 
 
-        private void updateGameViewBTNs()
+        private void updateGameViewBTNs(int[,] gameGrid)
         {
             for (int i = 0; i <= BTNGrid.GetUpperBound(0); i++)
             {
                 for (int j = 0; j <= BTNGrid.GetUpperBound(1); j++)
                 {
                     var btn = BTNGrid[i, j];
-                    btn.BackgroundColor = Color.Black;
-                    //btn.IsEnabled = false;
+                    btn.BackgroundColor = Color.Black;                    
 
                     switch (gameGrid[i, j])
                     {
@@ -89,117 +87,55 @@ namespace Reversi
 
         private void updateGameViewBTNcanMove(List<KeyValuePair<int, int>> list)
         {
-
             foreach (var v in list)
             {
                 var btn = BTNGrid[v.Key, v.Value];
-                btn.BackgroundColor = Color.Blue;
-                btn.IsEnabled = true;
-
+                btn.BackgroundColor = Color.Blue;                
             }
         }
 
-        private void updateGameInfo()
-        {
-            gameStack.Push(new KeyValuePair<int[,], Turn>(gameGrid.Clone() as int[,], whoTurn));
-            LabelGameTurn.Text = (whoTurn == Turn.Black)?"黑子下":"白子下";
-            int blackCount = 0;
-            int whiteCount = 0;
-            for(int i=0;i<=gameGrid.GetUpperBound(0);i++)
-            {
-                for(int j=0;j<=gameGrid.GetUpperBound(1);j++)
-                {
-                    if(gameGrid[i,j]==0)
-                    {
-                        blackCount++;
-                    }
-                    else if (gameGrid[i, j] == 1)
-                    {
-                        whiteCount++;
-                    }
-                }
-            }
-            LabelBlackScore.Text = string.Format("○: {0,2:##}", blackCount);
-            LabelWhiteScore.Text = string.Format("●: {0,2:##}", whiteCount);
+        private void updateGameViewInfo(ReversiLogic reversi, int blackAmount, int whiteAmount)
+        {          
+            LabelGameTurn.Text = (reversi.WhoTurn == ReversiLogic.Turn.Black) ? "黑子下" : "白子下";
+
+            LabelBlackScore.Text = string.Format("○: {0,2:00}", blackAmount);
+            LabelWhiteScore.Text = string.Format("●: {0,2:00}", whiteAmount);
         }
 
 
 
-        private void initGame()
-        {
-            gameStack.Clear();
-            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
-            {
-                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
-                {
-                    gameGrid[i, j] = -1;
-                }
-            }
 
-            gameGrid[3, 3] = 0;
-            gameGrid[3, 4] = 1;
-            gameGrid[4, 3] = 1;
-            gameGrid[4, 4] = 0;
-            whoTurn = Turn.Black;
-            updateGameInfo();
-            updateGameViewBTNs();
-            updateGameViewBTNcanMove(getCanPut(whoTurn));
+        protected void onGameBroadChanged(object sender, int blackAmount, int whiteAmount)
+        {
+            updateGameViewBTNs((sender as ReversiLogic).GameGrid);
+            updateGameViewBTNcanMove((sender as ReversiLogic).getCanPut((sender as ReversiLogic).WhoTurn));
+            updateGameViewInfo(sender as ReversiLogic, blackAmount, whiteAmount);
         }
 
-        private void undoGame()
+        protected async void onGameFinished(object sender, ReversiLogic.Turn whoWon)
         {
-            if (gameStack.Count >= 2)
-            {
-                gameStack.Pop();
-                var top = gameStack.Pop();
-                //gameStack.Push(top);
-
-                gameGrid = top.Key;
-                whoTurn = top.Value;
-                updateGameViewBTNs();
-                updateGameViewBTNcanMove(getCanPut(whoTurn));
-                updateGameInfo();
-            }
-        }
-
-        private async void finishGame()
-        {
-            updateGameViewBTNs();
-            updateGameInfo();
-            int blackCount = 0;
-            int whiteCount = 0;
-            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
-            {
-                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
-                {
-                    if (gameGrid[i, j] == 0)
-                    {
-                        blackCount++;
-                    }
-                    else if (gameGrid[i, j] == 1)
-                    {
-                        whiteCount++;
-                    }
-                }
-            }
+            updateGameViewBTNs((sender as ReversiLogic).GameGrid);
             string winner;
-            if(blackCount>whiteCount)
+            switch (whoWon)
             {
-                winner = "黑的";
-            }
-            else if(whiteCount>blackCount)
-            {
-                winner = "白的";
-            }
-            else
-            {
-                winner = "平手";
+                case ReversiLogic.Turn.None:
+                    winner = "平手";
+                    break;
+                case ReversiLogic.Turn.Black:
+                    winner = "黑的";
+                    break;
+                case ReversiLogic.Turn.White:
+                    winner = "白的";
+                    break;
+                default:
+                    winner = "平手";
+                    break;
             }
             await DisplayAlert("誰贏了?", winner, "好喔");
             bool anotherGameSel = await DisplayAlert("再來一局?", "你要再來一局嗎?", "好", "不要");
             if (anotherGameSel)
             {
-                initGame();
+                reversi.InitGame();
             }
             else
             {
@@ -210,434 +146,16 @@ namespace Reversi
                 }
                 else
                 {
-                    
+                    //Non action
                 }
             }
         }
 
-
-        List<KeyValuePair<int, int>> getCanPut(Turn nowMoving)
-        {
-
-            List<KeyValuePair<int, int>> ret = new List<KeyValuePair<int, int>>();
-            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
-            {
-                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
-                {
-                    if (gameGrid[i, j] == -1)
-                    {
-                        switch (nowMoving)
-                        {
-                            case Turn.Black:
-                                if (getNextGrid(i, j, Turn.Black) != null)
-                                {
-                                    ret.Add(new KeyValuePair<int, int>(i, j));
-                                }
-                                break;
-                            case Turn.White:
-                                if (getNextGrid(i, j, Turn.White) != null)
-                                {
-                                    ret.Add(new KeyValuePair<int, int>(i, j));
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-            return ret;
-        }
-
-        int[,] getNextGrid(int row, int col, Turn turn)
-        {
-            int[,] result = null;
-            switch (turn)
-            {
-                case Turn.Black:
-                    {
-                        for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
-                        {
-                            for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
-                            {
-                                if (gameGrid[i, j] == 0 && !(row == i && col == j))
-                                {
-                                    List<KeyValuePair<int, int>> modify = new List<KeyValuePair<int, int>>();
-
-                                    //nextGrid[row, col] = 0;
-                                    modify.Add(new KeyValuePair<int, int>(row, col));
-                                    if (i == row)
-                                    {
-                                        int from = col;
-                                        int to = j;
-                                        if (from > to)
-                                        {
-                                            int temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to -= 1;
-                                        from += 1;
-                                        bool failed = false;
-                                        if (from > to)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from <= to)
-                                        {
-                                            if (gameGrid[row, from] == 1)
-                                            {
-                                                //nextGrid[row, from] = 0;
-                                                modify.Add(new KeyValuePair<int, int>(row, from));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from++;
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 0;
-                                            }
-                                        }
-                                    }
-                                    if (j == col)
-                                    {
-                                        int from = row;
-                                        int to = i;
-                                        if (from > to)
-                                        {
-                                            int temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to -= 1;
-                                        from += 1;
-                                        bool failed = false;
-                                        if (from > to)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from <= to)
-                                        {
-                                            if (gameGrid[from, col] == 1)
-                                            {
-                                                modify.Add(new KeyValuePair<int, int>(from, col));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from++;
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 0;
-                                            }
-                                        }
-                                    }
-                                    if (((Double)(row - i) / (col - j)) == 1.0)
-                                    {
-
-                                        Point from = new Point(row, col);
-                                        Point to = new Point(i, j);
-                                        Point step = new Point(1, 1);
-                                        if (from.X > to.X)
-                                        {
-                                            Point temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to = to.Subtract(step);
-                                        from = from.Add(step);
-                                        bool failed = false;
-                                        if (from.X > to.X)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from.X <= to.X)
-                                        {
-                                            if (gameGrid[(int)from.X, (int)from.Y] == 1)
-                                            {
-                                                modify.Add(new KeyValuePair<int, int>((int)from.X, (int)from.Y));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from = from.Add(step);
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 0;
-                                            }
-                                        }
-                                    }
-                                    if (((Double)(row - i) / (col - j)) == -1.0)
-                                    {
-                                        Point from = new Point(row, col);
-                                        Point to = new Point(i, j);
-                                        Point step = new Point(1, -1);
-                                        if (from.X > to.X)
-                                        {
-                                            Point temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to = to.Subtract(step);
-                                        from = from.Add(step);
-                                        bool failed = false;
-                                        if (from.X > to.X)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from.X <= to.X)
-                                        {
-                                            if (gameGrid[(int)from.X, (int)from.Y] == 1)
-                                            {
-                                                modify.Add(new KeyValuePair<int, int>((int)from.X, (int)from.Y));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from = from.Add(step);
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 0;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                    }
-                case Turn.White:
-                    {
-                        for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
-                        {
-                            for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
-                            {
-                                if (gameGrid[i, j] == 1 && !(row == i && col == j))
-                                {
-                                    List<KeyValuePair<int, int>> modify = new List<KeyValuePair<int, int>>();
-
-                                    //nextGrid[row, col] = 0;
-                                    modify.Add(new KeyValuePair<int, int>(row, col));
-                                    if (i == row)
-                                    {
-                                        int from = col;
-                                        int to = j;
-                                        if (from > to)
-                                        {
-                                            int temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to -= 1;
-                                        from += 1;
-                                        bool failed = false;
-                                        if (from > to)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from <= to)
-                                        {
-                                            if (gameGrid[row, from] == 0)
-                                            {
-                                                //nextGrid[row, from] = 1;
-                                                modify.Add(new KeyValuePair<int, int>(row, from));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from++;
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 1;
-                                            }
-                                        }
-                                    }
-                                    if (j == col)
-                                    {
-                                        int from = row;
-                                        int to = i;
-                                        if (from > to)
-                                        {
-                                            int temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to -= 1;
-                                        from += 1;
-                                        bool failed = false;
-                                        if (from > to)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from <= to)
-                                        {
-                                            if (gameGrid[from, col] == 0)
-                                            {
-                                                modify.Add(new KeyValuePair<int, int>(from, col));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from++;
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 1;
-                                            }
-                                        }
-                                    }
-                                    if (((Double)(row - i) / (col - j)) == 1.0)
-                                    {
-
-                                        Point from = new Point(row, col);
-                                        Point to = new Point(i, j);
-                                        Point step = new Point(1, 1);
-                                        if (from.X > to.X)
-                                        {
-                                            Point temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to = to.Subtract(step);
-                                        from = from.Add(step);
-                                        bool failed = false;
-                                        if (from.X > to.X)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from.X <= to.X)
-                                        {
-                                            if (gameGrid[(int)from.X, (int)from.Y] == 0)
-                                            {
-                                                modify.Add(new KeyValuePair<int, int>((int)from.X, (int)from.Y));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from = from.Add(step);
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 1;
-                                            }
-                                        }
-                                    }
-                                    if (((Double)(row - i) / (col - j)) == -1.0)
-                                    {
-                                        Point from = new Point(row, col);
-                                        Point to = new Point(i, j);
-                                        Point step = new Point(1, -1);
-                                        if (from.X > to.X)
-                                        {
-                                            Point temp = from;
-                                            from = to;
-                                            to = temp;
-                                        }
-
-                                        to = to.Subtract(step);
-                                        from = from.Add(step);
-                                        bool failed = false;
-                                        if (from.X > to.X)
-                                        {
-                                            failed = true;
-                                        }
-                                        while (from.X <= to.X)
-                                        {
-                                            if (gameGrid[(int)from.X, (int)from.Y] == 0)
-                                            {
-                                                modify.Add(new KeyValuePair<int, int>((int)from.X, (int)from.Y));
-                                            }
-                                            else
-                                            {
-                                                failed = true;
-                                            }
-                                            from = from.Add(step);
-                                        }
-                                        if (!failed)
-                                        {
-                                            if (result == null)
-                                            {
-                                                result = gameGrid.Clone() as int[,];
-                                            }
-                                            foreach (var v in modify)
-                                            {
-                                                result[v.Key, v.Value] = 1;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                    }
-            }
-            return result;
-        }
 
 
         protected void BTNUndo_Clicked(object sender, EventArgs e)
         {
-            undoGame();
+            reversi.UndoGame();
         }
 
         protected void reversiBTNClicked(object sender, EventArgs args)
@@ -649,42 +167,17 @@ namespace Reversi
                 {
                     int row = btn.gameRow;
                     int col = btn.gameCol;
-                    Turn nowTurn = whoTurn;
-                    var next = getNextGrid(row, col, nowTurn);
-                    if (next != null)
-                    {
-                        gameGrid = next;
-                        whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
-                        updateGameViewBTNs();
-                        var nextCanMove = getCanPut(whoTurn);
-                        if (nextCanMove.Count > 0)
-                        {
-                            updateGameViewBTNcanMove(nextCanMove);
-                            updateGameInfo();
-                        }
-                        else
-                        {
-                            whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
-                            nextCanMove = getCanPut(whoTurn);
-                            if (nextCanMove.Count > 0)
-                            {
-                                updateGameViewBTNcanMove(nextCanMove);
-                                updateGameInfo();
-                            }
-                            else
-                            {
-                                finishGame();
-                            }
-                        }
-                    }
-
+                    reversi.PutDot(row, col);                    
                 }
             }
         }
 
-        private void Button_Clicked(object sender, EventArgs e)
-        {
-
+        private async void BTNRestart_Clicked(object sender, EventArgs e)
+        {            
+            if (await DisplayAlert("重來", "你要重來嗎?", "好", "不要"))
+            {
+                reversi.InitGame();
+            }
         }
     }
 }
