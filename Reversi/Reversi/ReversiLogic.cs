@@ -542,12 +542,12 @@ namespace Reversi
 
         public void PutDot(int row, int col)
         {
-            Turn nowTurn = whoTurn;
-            var next = getNextGrid(row, col, nowTurn);
+            
+            var next = getNextGrid(row, col, whoTurn);
             if (next != null)
             {
                 gameGrid = next;
-                whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
+                whoTurn = (whoTurn == Turn.Black) ? Turn.White : Turn.Black;
 
                 var nextCanMove = getCanPut(whoTurn);
                 if (nextCanMove.Count > 0)
@@ -556,7 +556,7 @@ namespace Reversi
                 }
                 else
                 {
-                    whoTurn = (nowTurn == Turn.Black) ? Turn.White : Turn.Black;
+                    whoTurn = (whoTurn == Turn.Black) ? Turn.White : Turn.Black;
                     nextCanMove = getCanPut(whoTurn);
                     if (nextCanMove.Count > 0)
                     {
