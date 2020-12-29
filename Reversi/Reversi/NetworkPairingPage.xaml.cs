@@ -79,7 +79,7 @@ namespace Reversi
                 cancelingBackground = true;
                 backgroundWorker.Wait();
             }
-            
+
             try
             {
                 udpReceiveThread.Abort();
@@ -199,12 +199,12 @@ namespace Reversi
                     string Tostr = receiveStr.Split(',')[2].Substring(5);
                     if (Tostr == id.ToString())
                     {
-                        string OKstr = "OK..";
+                        string OKstr = "OK.., Name: " + ((EntryPlayerName.Text != "") ? EntryPlayerName.Text : defaultName);
                         client.GetStream().Write(Encoding.UTF8.GetBytes(OKstr), 0, Encoding.UTF8.GetByteCount(OKstr));
                         Dispatcher.BeginInvokeOnMainThread(() =>
                         {
                             Navigation.PopModalAsync();
-                            Navigation.PushModalAsync(new NetworkPlayPage(client));
+                            Navigation.PushModalAsync(new NetworkPlayPage(client, ulong.Parse(IDstr) ^ id, Namestr, true));
                         });
                     }
 
@@ -221,19 +221,21 @@ namespace Reversi
                 int trying = 0;
                 do
                 {
-                    string telegram = string.Format("ID: {0}, Name: {1}, To: {2}", id.ToString(), (EntryPlayerName.Text != "") ? EntryPlayerName.Text : defaultName, btn.PeerID.ToString());
+                    string telegram = string.Format("ID: {0}, Name: {1}, To: {2}", id.ToString(),
+                        (EntryPlayerName.Text != "") ? EntryPlayerName.Text : defaultName, btn.PeerID.ToString());
                     tcpClient.GetStream().Write(Encoding.UTF8.GetBytes(telegram), 0, Encoding.UTF8.GetByteCount(telegram));
 
                     byte[] buffer = new byte[2048];
                     tcpClient.GetStream().Read(buffer, 0, buffer.Length);
                     string response = Encoding.UTF8.GetString(buffer);
                     response = response.Trim('\0');
-                    if (response.Contains("OK.."))
+                    if (response.Contains("OK.., Name: "))
                     {
+                        string peerName = response.Split(',')[1].Substring(7);
                         Dispatcher.BeginInvokeOnMainThread(() =>
                         {
                             Navigation.PopModalAsync();
-                            Navigation.PushModalAsync(new NetworkPlayPage(tcpClient));
+                            Navigation.PushModalAsync(new NetworkPlayPage(tcpClient, id ^ btn.PeerID, peerName, false));
                         });
                         break;
                     }
