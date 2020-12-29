@@ -8,19 +8,19 @@
                 Black
             </StackLayout.BackgroundColor>
 
-            <Grid>
+            <Grid VerticalOptions="Start" HeightRequest="95">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140"/>
                     <ColumnDefinition Width="*"/>
-
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="140"/>
                 </Grid.ColumnDefinitions>
-                <Label x:Name="LabelBlackScore" Text="○: 00" TextColor="White" FontSize="60" HorizontalOptions="StartAndExpand" Grid.Column="0"/>
-
-                <Label x:Name="LabelWhiteScore" Text="●: 00" TextColor="White" FontSize="60" HorizontalOptions="EndAndExpand" Grid.Column="1"/>
+                <Label x:Name="LabelBlackScore" Text="○: 00" TextColor="White" FontSize="48" HorizontalOptions="StartAndExpand" Grid.Column="0" Padding="0,0,0,10"/>
+                <Label x:Name="LabelGameTurn" Text="白子下" TextColor="White" FontSize="20" HorizontalOptions="CenterAndExpand" VerticalOptions="Center" Grid.Column="1"/>
+                <Label x:Name="LabelWhiteScore" Text="●: 00" TextColor="White" FontSize="48" HorizontalOptions="EndAndExpand" Grid.Column="2" Padding="0,0,0,10"/>
             </Grid>
+            
 
-            <StackLayout HeightRequest="40" BackgroundColor="Transparent"/>
-            <StackLayout HeightRequest="400" BackgroundColor="White">
+            <StackLayout VerticalOptions="Start" HeightRequest="500" BackgroundColor="White">
                 <Grid x:Name="mainGameGrid" Margin="5,5,5,5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -50,28 +50,32 @@
                     </Grid.ColumnSpacing>
                 </Grid>
             </StackLayout>
-            <Label x:Name="LabelGameTurn" Text="白子下" TextColor="White" FontSize="36" HorizontalOptions="CenterAndExpand"/>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Button Text="Undo" Grid.Column="0"    Clicked="BTNUndo_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,10,10,10"/>
-                <Button Text="Restart" Grid.Column="1" Clicked="BTNRestart_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,10,10,10"/>
-            </Grid>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Button Text="簡單" x:Name="BTNEasy" Grid.Column="0" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="10,0,2,0"/>
-                <Button Text="普通" x:Name="BTNMeid" Grid.Column="1" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="2,0,2,0"/>
-                <Button Text="困難" x:Name="BTNHard" Grid.Column="2" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="2,0,2,0"/>
-                <Button Text="隨便" x:Name="BTNRand" Grid.Column="3" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="2,0,10,0"/>
-            </Grid>
-            <Button Text="AI Wait?" Clicked="BTNAIWait_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Blue"        HorizontalOptions="Fill" Margin="10,5,10,10"/>
+            <StackLayout VerticalOptions="EndAndExpand"/>
+            <StackLayout VerticalOptions="End" HeightRequest="130" Margin="0,0,0,10">
+                
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Text="Undo" Grid.Column="0"    Clicked="BTNUndo_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,0,10,10"/>
+                    <Button Text="Restart" Grid.Column="1" Clicked="BTNRestart_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,0,10,10"/>
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Text="簡單" x:Name="BTNEasy" Grid.Column="0" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="10,0,2,0"/>
+                    <Button Text="普通" x:Name="BTNMeid" Grid.Column="1" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="2,0,2,0"/>
+                    <Button Text="困難" x:Name="BTNHard" Grid.Column="2" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="2,0,2,0"/>
+                    <Button Text="隨便" x:Name="BTNRand" Grid.Column="3" Clicked="BTNDiffcultyChange_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="Fill" Margin="2,0,10,0"/>
+                </Grid>
+
+                <Button IsVisible="false" Text="AI Wait?" Clicked="BTNAIWait_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Blue"        HorizontalOptions="Fill" Margin="10,5,10,10"/>
+            </StackLayout>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

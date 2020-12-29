@@ -98,7 +98,7 @@ namespace Reversi
         private void updateGameViewInfo(ReversiLogic reversi, int blackAmount, int whiteAmount)
         {
             LabelGameTurn.Text = (reversi.WhoTurn == playerRole) ? "玩家下" : "電腦下";
-            LabelGameTurn.Text += "    ";
+            LabelGameTurn.Text += "\n";
             LabelGameTurn.Text += (reversi.WhoTurn == ReversiLogic.Turn.Black) ? "(黑子)" : "(白子)";
 
             LabelBlackScore.Text = string.Format("○: {0,2:00}", blackAmount);

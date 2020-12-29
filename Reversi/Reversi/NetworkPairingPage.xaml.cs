@@ -235,6 +235,7 @@ namespace Reversi
                             Navigation.PopModalAsync();
                             Navigation.PushModalAsync(new NetworkPlayPage(tcpClient));
                         });
+                        break;
                     }
                     else
                     {
