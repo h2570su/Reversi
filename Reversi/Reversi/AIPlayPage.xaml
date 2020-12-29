@@ -20,7 +20,7 @@
             </Grid>
             
 
-            <StackLayout VerticalOptions="Start" HeightRequest="500" BackgroundColor="White">
+            <StackLayout VerticalOptions="Start" BackgroundColor="White">
                 <Grid x:Name="mainGameGrid" Margin="5,5,5,5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>

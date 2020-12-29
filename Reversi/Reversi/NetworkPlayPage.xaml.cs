@@ -41,7 +41,7 @@ namespace Reversi
             tcpReceiveThread = new System.Threading.Thread(receiveingTCPPacket);
             tcpReceiveThread.IsBackground = true;
             tcpReceiveThread.Start();
-                       
+
             Disappearing += clearBackground;
             PeerDataComing += OnPeerDataComing;
             PeerDisconnected += OnPeerDisconnected;
@@ -64,7 +64,7 @@ namespace Reversi
                 }
             }
             reversi.BroadChanged += onGameBroadChanged;
-            reversi.GameFinished += onGameFinished;            
+            reversi.GameFinished += onGameFinished;
 
             if (init)
             {
@@ -72,7 +72,7 @@ namespace Reversi
             }
         }
 
-        
+
 
         private void updateGameViewBTNs(int[,] gameGrid)
         {
@@ -116,7 +116,7 @@ namespace Reversi
 
         private void updateGameViewInfo(ReversiLogic reversi, int blackAmount, int whiteAmount)
         {
-            LabelGameTurn.Text = (reversi.WhoTurn == playerRole) ? "玩家下" : "電腦下";
+            LabelGameTurn.Text = (reversi.WhoTurn == playerRole) ? "你下" : "對方下";
             LabelGameTurn.Text += "\n";
             LabelGameTurn.Text += (reversi.WhoTurn == ReversiLogic.Turn.Black) ? "(黑子)" : "(白子)";
 
@@ -124,7 +124,7 @@ namespace Reversi
             LabelWhiteScore.Text = string.Format("●: {0,2:00}", whiteAmount);
         }
 
-        private async void initGame()
+        private void initGame()
         {
             playerRole = (DateTime.Now.Second % 2 == 0) ? ReversiLogic.Turn.Black : ReversiLogic.Turn.White;
             reversi.InitGame();
@@ -134,43 +134,46 @@ namespace Reversi
                 LabelSelfName.Text = "○: ";
                 LabelPeerName.Text = "●: ";
                 telegram += "White";
-                await DisplayAlert("你是 黑色", "你是 黑色", "好喔");
+                DisplayAlert("你是 黑色", "你是 黑色", "好喔");
             }
             else
             {
                 LabelSelfName.Text = "●: ";
                 LabelPeerName.Text = "○: ";
                 telegram += "Black";
-                await DisplayAlert("你是 白色", "你是 白色", "好喔");                
+                DisplayAlert("你是 白色", "你是 白色", "好喔");
             }
             LabelSelfName.Text += "你";
             LabelPeerName.Text += PeerNickName;
 
             sendTCPPacket(telegram);
         }
-      
+
         private void onReceivedInit(string data)
         {
             string localTurnStr = data.Split(',')[1].Substring(6);
-            Dispatcher.BeginInvokeOnMainThread( async() =>
-            {
-                if (localTurnStr == "Black")
-                {
-                    LabelSelfName.Text = "○: ";
-                    LabelPeerName.Text = "●: ";
-                    playerRole = ReversiLogic.Turn.Black;
-                    await DisplayAlert("你是 黑色", "你是 黑色", "好喔");
-                }
-                else
-                {
-                    LabelSelfName.Text = "●: ";
-                    LabelPeerName.Text = "○: ";
-                    playerRole = ReversiLogic.Turn.White;
-                    await DisplayAlert("你是 白色", "你是 白色", "好喔");
-                }
-                LabelSelfName.Text += "你";
-                LabelPeerName.Text += PeerNickName;
-            });
+            Dispatcher.BeginInvokeOnMainThread(() =>
+           {
+               if (localTurnStr == "Black")
+               {
+                   LabelSelfName.Text = "○: ";
+                   LabelPeerName.Text = "●: ";
+                   playerRole = ReversiLogic.Turn.Black;
+                   DisplayAlert("你是 黑色", "你是 黑色", "好喔");
+               }
+               else
+               {
+                   LabelSelfName.Text = "●: ";
+                   LabelPeerName.Text = "○: ";
+                   playerRole = ReversiLogic.Turn.White;
+                   DisplayAlert("你是 白色", "你是 白色", "好喔");
+               }
+               LabelSelfName.Text += "你";
+               LabelPeerName.Text += PeerNickName;
+
+               reversi.InitGame();
+
+           });
         }
 
         protected void onGameBroadChanged(object sender, int blackAmount, int whiteAmount)
@@ -182,9 +185,9 @@ namespace Reversi
             {
                 updateGameViewBTNcanMove((sender as ReversiLogic).getCanPut((sender as ReversiLogic).WhoTurn));
             }
-            else 
+            else
             {
-                
+
             }
         }
 
@@ -192,21 +195,27 @@ namespace Reversi
         {
             updateGameViewBTNs((sender as ReversiLogic).GameGrid);
             string winner;
+            string telegram = "FIN, ";
             switch (whoWon)
             {
                 case ReversiLogic.Turn.None:
                     winner = "平手";
+                    telegram += "Draw";
                     break;
                 case ReversiLogic.Turn.Black:
                     winner = "黑的";
+                    telegram += "Black";
                     break;
                 case ReversiLogic.Turn.White:
                     winner = "白的";
+                    telegram += "White";
                     break;
                 default:
                     winner = "平手";
+                    telegram += "Draw";
                     break;
             }
+            sendTCPPacket(telegram);
             await DisplayAlert("誰贏了?", winner, "好喔");
             bool anotherGameSel = await DisplayAlert("再來一局?", "你要再來一局嗎?", "好", "不要");
             if (anotherGameSel)
@@ -232,12 +241,14 @@ namespace Reversi
         protected void BTNUndo_Clicked(object sender, EventArgs e)
         {
             undoing = true;
-            if (playerRole == ReversiLogic.Turn.Black || (playerRole == ReversiLogic.Turn.White && reversi.StackHeight >= 3))
+            if (reversi.StackHeight>=2)
             {
-                do
+                if(reversi.LastTurn!=ReversiLogic.Turn.None&&reversi.LastTurn==playerRole)
                 {
                     reversi.UndoGame();
-                } while (reversi.WhoTurn != playerRole);
+                    string telegram = "UNDO,";
+                    sendTCPPacket(telegram);
+                }
             }
             undoing = false;
         }
@@ -252,6 +263,9 @@ namespace Reversi
                     int row = btn.gameRow;
                     int col = btn.gameCol;
                     reversi.PutDot(row, col);
+
+                    string telegram = "PUT, " + reversi.GetGridSerialize() + ", Turn: " + ((reversi.WhoTurn == ReversiLogic.Turn.Black) ? "Black" : "White");
+                    sendTCPPacket(telegram);
                 }
             }
         }
@@ -264,7 +278,7 @@ namespace Reversi
             }
         }
 
-      
+
 
         private async void OnPeerDisconnected()
         {
@@ -274,14 +288,88 @@ namespace Reversi
 
         private void OnPeerDataComing(string data)
         {
-            if(data.Contains(","))
+            if (data.Contains(","))
             {
                 string select = data.Split(',')[0];
-                if(select=="INIT")
+                if (select == "INIT")
                 {
                     onReceivedInit(data);
                 }
+                else if (select == "PUT")
+                {
+                    onReceivedPut(data);
+                }
+                else if(select == "FIN")
+                {
+                    onReceivedGameFinished(data);
+                }
+                else if(select=="UNDO")
+                {
+                    onReceivedUndo(data);
+                }
             }
+        }
+
+        private void onReceivedPut(string data)
+        {
+            string gridStr = data.Split(',')[1].Substring(1);
+            string turnStr = data.Split(',')[2].Substring(7);
+            Dispatcher.BeginInvokeOnMainThread(() =>
+           {
+               ReversiLogic.Turn nextTurn = (turnStr == "Black") ? ReversiLogic.Turn.Black : ReversiLogic.Turn.White;
+               reversi.PutGrid(gridStr, nextTurn);
+
+           });
+        }
+
+        private void onReceivedUndo(string data)
+        {
+            Dispatcher.BeginInvokeOnMainThread(() =>
+           {
+               reversi.UndoGame();
+           });
+        }
+
+        protected void onReceivedGameFinished(string data)
+        {            
+            string remoteWinnerStr = data.Split(',')[1].Substring(1);
+            string winner;
+            switch (remoteWinnerStr)
+            {
+                case "Draw":
+                    winner = "平手";
+                    break;
+                case "Black":
+                    winner = "黑的";
+                    break;
+                case "White":
+                    winner = "白的";
+                    break;
+                default:
+                    winner = "平手";
+                    break;
+            }
+            Dispatcher.BeginInvokeOnMainThread( async() =>
+            {
+                await DisplayAlert("誰贏了?", winner, "好喔");
+                bool anotherGameSel = await DisplayAlert("再來一局?", "你要再來一局嗎?", "好", "不要");
+                if (anotherGameSel)
+                {
+                    initGame();
+                }
+                else
+                {
+                    bool quitSel = await DisplayAlert("不然呢?", "你想要怎樣", "退出", "待著");
+                    if (quitSel)
+                    {
+                        Navigation.PopModalAsync();
+                    }
+                    else
+                    {
+                        //Non action
+                    }
+                }
+            });
         }
 
         private void clearBackground(object sender, EventArgs args)

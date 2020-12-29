@@ -20,7 +20,7 @@
             </Grid>
 
 
-            <StackLayout VerticalOptions="Start" HeightRequest="500" BackgroundColor="White">
+            <StackLayout VerticalOptions="Start" BackgroundColor="White">
                 <Grid x:Name="mainGameGrid" Margin="5,5,5,5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -53,17 +53,17 @@
             <StackLayout VerticalOptions="EndAndExpand"/>
             <StackLayout VerticalOptions="End" HeightRequest="130" Margin="0,0,0,10">
 
-                <Grid>
+                <Grid HeightRequest="50">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Text="Undo" Grid.Column="0"    Clicked="BTNUndo_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,0,10,10"/>
-                    <Button Text="Restart" Grid.Column="1" Clicked="BTNRestart_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,0,10,10"/>
+                    <Button Text="Undo" Grid.Column="0"    Clicked="BTNUndo_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,0,10,0"/>
+                    <Button Text="Restart" Grid.Column="1" Clicked="BTNRestart_Clicked" TextColor="White" BorderColor="White" BorderWidth="5" BackgroundColor="Transparent" HorizontalOptions="FillAndExpand" Margin="10,0,10,0"/>
                 </Grid>
 
-                <Label x:Name="LabelSelfName" Text="○: " TextColor="White" FontSize="48" HorizontalOptions="Start" Padding="0,0,0,10"/>
-                <Label x:Name="LabelPeerName" Text="●: 00" TextColor="White" FontSize="48" HorizontalOptions="End" Padding="0,0,0,10"/>
+                <Label x:Name="LabelSelfName" Text="○: " TextColor="White" FontSize="16" HorizontalOptions="Start" Padding="0,0,0,5"/>
+                <Label x:Name="LabelPeerName" Text="●: 00" TextColor="White" FontSize="16" HorizontalOptions="End" Padding="0,0,0,5"/>
             </StackLayout>
         </StackLayout>
     </ContentPage.Content>

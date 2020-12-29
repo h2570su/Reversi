@@ -14,6 +14,7 @@ namespace Reversi
         public int[,] GameGrid { get { return gameGrid.Clone() as int[,]; } }
         public Turn WhoTurn { get { return whoTurn; } }
         public int StackHeight { get { return gameStack.Count; } }
+        public Turn LastTurn { get { return (gameStack.Count >= 2) ? gameStack.ToArray()[1].Value : Turn.None; } }
 
         int[,] gameGrid = new int[8, 8];
         Stack<KeyValuePair<int[,], Turn>> gameStack = new Stack<KeyValuePair<int[,], Turn>>();
@@ -542,7 +543,7 @@ namespace Reversi
 
         public void PutDot(int row, int col)
         {
-            
+
             var next = getNextGrid(row, col, whoTurn);
             if (next != null)
             {
@@ -568,6 +569,68 @@ namespace Reversi
                         finishGame();
                     }
                 }
+            }
+        }
+
+        public string GetGridSerialize()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.Append("{");
+            for (int i = 0; i <= gameGrid.GetUpperBound(0); i++)
+            {
+                for (int j = 0; j <= gameGrid.GetUpperBound(1); j++)
+                {
+                    builder.Append(gameGrid[i, j].ToString());
+                    if (j < gameGrid.GetUpperBound(1))
+                    {
+                        builder.Append(" ");
+                    }
+                }
+                builder.Append(";");
+            }
+
+            return builder.ToString();
+        }
+
+        public void PutGrid(string strToParse, Turn turn)
+        {
+            bool vaild = true;
+            string str = strToParse.Trim('{', '}');
+            string[] rows = str.Split(';');
+            int[,] parseGrid = new int[8, 8];
+            if (rows.Length == 9)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    string[] cols = rows[i].Split(' ');
+                    if (cols.Length != 8)
+                    {
+                        vaild = false;
+                        break;
+                    }
+                    else
+                    {
+                        for (int j = 0; j < 8; j++)
+                        {
+                            if(!int.TryParse(cols[j], out parseGrid[i, j]))
+                            {
+                                vaild = false;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                vaild = false;
+            }
+
+            if(vaild)
+            {
+                gameGrid = parseGrid;
+                whoTurn = turn;
+                updateGameInfo();
             }
         }
 
